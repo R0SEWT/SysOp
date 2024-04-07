@@ -65,7 +65,7 @@ values
     ('Hogar', 1),
     ('Electrodomésticos de Oficina', 1); 
 
- insert into CategoriaProducto(name, super_categoria)
+insert into CategoriaProducto(name, super_categoria)
 values
     ('Refrigeradores', 2),
     ('Estufas', 2),
@@ -76,6 +76,29 @@ values
  ; 
  select * from CategoriaProducto
 
+insert into Producto(categoria_id, stock, sku, name, precio, descripcion, img)
+values
+	(5, 100, 'SKU001', 'Refrigerador Modelo A', 1500.00, 'Refrigerador de 200 litros', NULL),
+    (6, 50, 'SKU002', 'Estufa Electrónica', 300.00, 'Estufa de 4 quemadores', NULL),
+    (7, 200, 'SKU003', 'Microondas 600W', 250.00, 'Microondas con temporizador', NULL),
+    (4, 150, 'SKU004', 'Lavadora 7kg', 1200.00, 'Lavadora de 7 kg con 12 ciclos', NULL),
+    (5, 100, 'SKU005', 'Secadora 5kg', 800.00, 'Secadora de 5 kg con 8 ciclos', NULL),
+    (6, 50, 'SKU006', 'Televisor LED 42"', 1000.00, 'Televisor LED de 42 pulgadas', NULL),
+    (5, 150, 'SKU007', 'Refrigerador Modelo B', 1800.00, 'Refrigerador de 300 litros', NULL),
+    (6, 200, 'SKU008', 'Estufa a Gas', 400.00, 'Estufa a gas de 3 quemadores', NULL),
+    (4, 250, 'SKU009', 'Lavadora 8kg', 1400.00, 'Lavadora de 8 kg con 14 ciclos', NULL),
+    (5, 150, 'SKU010', 'Secadora 6kg', 900.00, 'Secadora de 6 kg con 9 ciclos', NULL);
 
-
+insert into ProductosVendidos(venta_id, producto_id, precio_u, cantidad)
+values
+    (101, 1, 1500.00, 1),
+    (101, 2, 300.00, 2),
+    (102, 3, 250.00, 1),
+    (102, 4, 1200.00, 1),
+    (103, 5, 800.00, 1),
+    (104, 6, 1000.00, 3),
+    (104, 7, 1800.00, 1),
+    (104, 8, 400.00, 1),
+    (105, 9, 1400.00, 1),
+    (106, 10, 900.00, 1);
 
