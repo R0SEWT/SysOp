@@ -18,7 +18,9 @@ Status: **Finalizado**
   
 Status: **En proceso**
 
-## TA3
+### Observaciones
 
+
+## TA3
 
 - [ ] Acabar con mi sufrimiento
