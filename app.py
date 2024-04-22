@@ -1,5 +1,7 @@
 from flask import Flask
 import consulta as q
+from decouple import config
+import pyodbc
 
 app = Flask(__name__)
 
