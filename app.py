@@ -1,13 +1,13 @@
 from flask import Flask
-from decouple import config
-import pyodbc
 import consulta as q
 
 app = Flask(__name__)
 
-@app.route('/')
+
+@app.route("/")
 def hello():
-    return 'Hello, World!'
+    return "Hello, World!"
+
 
 @app.route('/consulta') 
 def consulta():
