@@ -1,0 +1,530 @@
+{% extends "base.html"%}
+
+{% block title %}TravelNook{% endblock %}
+
+{% block head %} 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        .caret {
+            color:black;
+        }
+        #inputOrigenSuggestions div,
+        #inputDestinoSuggestions div {
+            padding: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s; /* Agregamos una transición para suavizar el efecto */
+        }
+
+        #inputOrigenSuggestions div:hover,
+        #inputDestinoSuggestions div:hover {
+            background-color: #60cdf8;
+        }
+
+        #InputContainer {
+            
+            display: flex;
+            align-items: self-end; /* Alinea los elementos en la línea base */
+            justify-content: space-between;
+            
+        }
+
+        #Content{
+            display: flex; 
+            justify-content: space-between;
+        }
+
+        #evitarCont{
+            width: 36%;
+            align-items: center;
+        }
+
+        #evitarInput{
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 10px;
+            width: 100%;
+            align-items: center;
+
+        }
+        #evitarSelected {
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 10px;
+            width: 100%;
+            align-items: center;
+        }
+
+        
+        #evitarSelected div:hover{
+            background-color: rgb(247, 129, 121);
+        }
+        #opcContainer {
+            width: 60%;
+            align-items: center;
+        }
+
+        #opcionesContainer {
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 10px;
+            width: 100%;
+            align-items: center;
+        }
+
+        #origenContainer,
+        #destinoContainer,
+        #evitarContainer {            
+            width: 30%;
+            position: relative;
+        }
+        
+        #ePaisContainer,
+        #eCiudadContainer,
+        #eAeropuertoContainer{
+            width: 100%;
+            position: relative;
+        }
+
+        #inputOrigenSuggestions,
+        #inputDestinoSuggestions,
+        #inputEvitarSuggestions,
+        #evitar_paisSuggestions,
+        #evitar_ciudadSuggestions,
+        #evitar_aeropuertoSuggestions {
+            position: absolute;
+            z-index: 1;
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.125);
+            max-height: 400px;
+            overflow-y: hidden;
+            opacity: 0;
+            pointer-events: none;
+            width: 100%;
+            border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        #inputOrigenSuggestions.show,
+        #inputDestinoSuggestions.show,
+        #evitar_paisSuggestions.show,
+        #evitar_ciudadSuggestions.show,
+        #evitar_aeropuertoSuggestions.show  {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #inputOrigenSuggestions {
+            top: 100%;
+        }
+
+        #inputDestinoSuggestions {
+            top: 100%;
+        }
+        
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="map" style="height: 450px;"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var mymap = L.map('map').setView([0, 0], 1);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mymap);
+                
+        function clearMarcasLineas(){
+            mymap.eachLayer(function (layer) {
+                if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+                    mymap.removeLayer(layer);
+                }
+            });
+        }
+        function agregarMarcasLineas(aeropuertos){
+            for (var i = 0; i < aeropuertos.length - 1; i++) {
+                var aeropuerto1 = aeropuertos[i];
+                var aeropuerto2 = aeropuertos[i + 1];
+                
+                var lonDifference1 = Math.abs(aeropuerto1.lon - aeropuerto2.lon);
+                var lonDifference2 = Math.abs(aeropuerto1.lon - (aeropuerto2.lon + 360));
+                var lonDifference3 = Math.abs(aeropuerto1.lon - (aeropuerto2.lon - 360));
+                
+                // Find the minimum difference
+                var minLonDifference = Math.min(lonDifference1, lonDifference2, lonDifference3);
+                
+                if (minLonDifference === lonDifference2) {
+                    aeropuerto2.lon += 360; // Adjust the longitude of the second airport
+                } else if (minLonDifference === lonDifference3) {
+                    aeropuerto2.lon -= 360; // Adjust the longitude of the second airport
+                }
+                
+                L.polyline([[aeropuerto1.lat, aeropuerto1.lon], [aeropuerto2.lat, aeropuerto2.lon]], {color: 'red', dashArray: '5, 10'}).addTo(mymap);
+            }
+            var markers = []
+            for (var i = 0; i < aeropuertos.length; i++) {
+                var aeropuerto = aeropuertos[i];
+                markers.push(L.marker([aeropuerto.lat, aeropuerto.lon]).addTo(mymap)
+                    .bindPopup(aeropuerto.nombre));
+            }
+        }
+        // Añade líneas que conectan los aeropuertos en el orden deseado
+        
+    </script>
+    <br />
+    <div id="InputContainer">
+        <div id="origenContainer">
+            <label for="inputOrigen">Origen</label>
+            <input type="text" class="form-control" id="inputOrigen" oninput="getCustomSuggestions('inputOrigen')" placeholder="¿Desde donde viaja?">
+            <div id="inputOrigenSuggestions"></div>
+        </div>
+        
+        <div id="destinoContainer">
+            <label for="inputDestino">Destino</label>
+            <input type="text" class="form-control" id="inputDestino" oninput="getCustomSuggestions('inputDestino')" placeholder="Elija su lugar de destino">
+            <div id="inputDestinoSuggestions"></div>
+        </div>
+
+        <div id="button">
+            <button class="btn btn-primary" id="enviarDatos">Buscar</button>
+        </div>
+    </div>
+    <br />
+    <div id="Content">
+        <div id="opcContainer">
+            <div id="opcionesContainer"></div>
+            <div id="imagen"></div>
+        </div>
+        <div id="evitarCont">
+            <div id="evitarInput">
+                <span><b>Evitar</b></span>
+                <br />
+                <div id="ePaisContainer">
+                    <label for="evitar_pais">Pais</label>
+                    <input type="text" class="form-control" id="evitar_pais" oninput="getCustomSuggestionEvitar('evitar_pais')" placeholder="Pais a evitar">
+                    <div id="evitar_paisSuggestions"></div>
+                </div>
+                <br />
+                <div id="eCiudadContainer">
+                    <label for="evitar_ciudad">Ciudad</label>
+                    <input type="text" class="form-control" id="evitar_ciudad" oninput="getCustomSuggestionEvitar('evitar_ciudad')" placeholder="Destinos a evitar">
+                    <div id="evitar_ciudadSuggestions"></div>
+                </div>
+                <br />
+                <div id="eAeropuertoContainer">
+                    <label for="evitar_aeropuerto">Aeropuerto</label>
+                    <input type="text" class="form-control" id="evitar_aeropuerto" oninput="getCustomSuggestionEvitar('evitar_aeropuerto')" placeholder="Destinos a evitar">
+                    <div id="evitar_aeropuertoSuggestions"></div>
+                </div>
+            </div>
+            <br />
+            <div id="evitarSelected"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('inputOrigen').addEventListener('focus', function () {
+            showSuggestions('inputOrigen');
+        });
+        
+        document.getElementById('inputDestino').addEventListener('focus', function () {
+            showSuggestions('inputDestino');
+        });
+
+        document.getElementById('evitar_pais').addEventListener('focus', function () {
+            showSuggestions('evitar_pais');
+        });
+        document.getElementById('evitar_ciudad').addEventListener('focus', function () {
+            showSuggestions('evitar_ciudad');
+        });
+        document.getElementById('evitar_aeropuerto').addEventListener('focus', function () {
+            showSuggestions('evitar_aeropuerto');
+        });
+
+        document.addEventListener('click', function(event) {
+            
+            var inputOrigenContainer = document.getElementById('origenContainer');
+            var inputDestinoContainer = document.getElementById('destinoContainer');
+            var inputEvitarPaisContainer = document.getElementById('evitar_pais');
+            var inputEvitarCiudadContainer = document.getElementById('evitar_ciudad');
+            var inputEvitarAeropuertoContainer = document.getElementById('evitar_aeropuerto');
+
+            var isClickInsideOrigen = inputOrigenContainer.contains(event.target);
+            var isClickInsideDestino = inputDestinoContainer.contains(event.target);
+            var isClickInsideEvitarPais = inputEvitarPaisContainer.contains(event.target);
+            var isClickInsideEvitarCiudad = inputEvitarCiudadContainer.contains(event.target);
+            var isClickInsideEvitarAeropuerto = inputEvitarAeropuertoContainer.contains(event.target);
+            
+            if (!isClickInsideOrigen) {
+                hideAndSelectFirst('inputOrigen');
+            }else{
+                showSuggestions('inputOrigen')
+            }
+            
+            if (!isClickInsideDestino) {
+                hideAndSelectFirst('inputDestino');
+            }else{
+                showSuggestions('inputDestino')
+            }
+            
+            if (!isClickInsideEvitarPais) {
+                hideAndSelectFirst('evitar_pais');
+            }else{
+                showSuggestions('evitar_pais')
+            }
+            if (!isClickInsideEvitarCiudad) {
+                hideAndSelectFirst('evitar_ciudad');
+            }else{
+                showSuggestions('evitar_ciudad')
+            }
+            if (!isClickInsideEvitarAeropuerto) {
+                hideAndSelectFirst('evitar_aeropuerto');
+            }else{
+                showSuggestions('evitar_aeropuerto')
+            }
+        });
+        
+        function showSuggestions(inputId) {
+            var suggestionsDiv = document.getElementById(`${inputId}Suggestions`);
+            suggestionsDiv.classList.add('show');
+        }
+
+        function hideSuggestions(inputId) {
+            var suggestionsDiv = document.getElementById(`${inputId}Suggestions`);
+            suggestionsDiv.classList.remove('show');
+        }
+        function hideAndSelectFirst(inputId) {
+            hideSuggestions(inputId);
+            selectFirstSuggestion(inputId);
+        }
+
+        function selectFirstSuggestion(inputId) {
+            var suggestionsDiv = document.getElementById(`${inputId}Suggestions`);
+            var firstSuggestion = suggestionsDiv.querySelector('div');
+
+            if (firstSuggestion) {
+                firstSuggestion.click();
+            }
+        }
+        document.getElementById('enviarDatos').addEventListener('click', function() {
+            var inputOrigenValue = document.getElementById('inputOrigen').value;
+            var inputDestinoValue = document.getElementById('inputDestino').value;
+            var opcionesDiv = document.getElementById('opcionesContainer');
+            var imagendiv = document.getElementById('imagen');
+            imagendiv.innerHTML = '';
+
+            var evitarOpciones = document.getElementById('evitarSelected');
+            var opcionesEvitar = evitarOpciones.querySelectorAll('div');
+
+            var contenidoSpan = [];
+
+            for (var i = 0; i < opcionesEvitar.length; i++) {
+                var primerSpan = opcionesEvitar[i].querySelector('span');
+                contenidoSpan.push(primerSpan.textContent);
+            }
+
+            if (!inputDestinoValue || !inputOrigenValue){
+                    opcionesDiv.innerHTML = "Por favor, rellene el origen y su destino";
+                    return;
+            }
+            fetch('/dijkstra', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputOrigen: inputOrigenValue,
+                    inputDestino: inputDestinoValue,
+                    inputEvitar: contenidoSpan
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearMarcasLineas()
+                var opciones = data.opciones || [];                
+                var costos = data.costos || [];
+
+                opcionesDiv.innerHTML = ''
+                index = 0;
+                console.log(opciones);
+                if (opciones.length === 0){
+                    opcionesDiv.innerHTML = "Ruta no encontrada";
+                    return;
+                }
+
+                opciones.forEach(function(opcion) {
+                    index++;
+                    var opcionElement = document.createElement('div');
+                    var puntosContainer = document.createElement('div');
+                    puntosContainer.id = `puntosOpcion${index}`;
+                    puntosContainer.classList.add('collapse');                    
+                    opcionElement.style.display = 'flex';
+                    opcionElement.style.alignItems = 'center';
+                    opcionElement.setAttribute("justify-content", "space-between");
+
+                    opcionElement.innerHTML = `<span>Opción ${index}, distancia: ${costos[index-1].toFixed(2)} km   </span>`;
+                    
+                    opcion.forEach(function(punto) {
+                        var puntoElement = document.createElement('div');
+                        puntoElement.style.alignItems = 'center';
+                        puntoElement.innerHTML =`<span style="font-size: 12px"><b>${punto.ciudad}, ${punto.pais}</b> <i>(${punto.nombre})</i></span><br>`;
+                        puntosContainer.appendChild(puntoElement);
+                    });
+
+                    var boton = document.createElement('button');
+                    boton.setAttribute('type', 'button');
+                    boton.classList.add('btn', 'collapsed');
+                    boton.setAttribute('data-toggle', 'collapse');
+                    boton.setAttribute('data-target', '#' + puntosContainer.id); 
+                    boton.setAttribute('aria-expanded', false);
+                    boton.setAttribute('aria-controls', puntosContainer.id);
+                    boton.setAttribute("align-self", "center");
+
+                    var svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+                    svgElement.setAttribute("width", "16");
+                    svgElement.setAttribute("height", "16");
+                    svgElement.setAttribute("fill", "currentColor");
+                    svgElement.setAttribute("class", "bi bi-arrow-down");
+                    svgElement.setAttribute("viewBox", "0 0 16 16");
+
+                    // Crear el elemento path dentro del svg
+                    var pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    pathElement.setAttribute("fill-rule", "evenodd");
+                    pathElement.setAttribute("d", "M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z");
+
+                    // Agregar el elemento path al elemento svg
+                    svgElement.appendChild(pathElement);
+                    
+                    boton.innerHTML= '<span>Detalle </span>';
+                    boton.appendChild(svgElement)
+                    opcionElement.appendChild(boton)
+
+                    opcionElement.addEventListener('click', function(){
+                        clearMarcasLineas();
+                        agregarMarcasLineas(opcion);
+                        var i = parseInt(puntosContainer.id.replace('puntosOpcion',''));
+                        var imageUrl = "{{ url_for('static', filename='graph.png') }}";
+                        imagendiv.innerHTML = `<img src="${imageUrl.replace('graph.png', 'graph' + (i - 1) + '.png')}" style="width: 100%; height: 100%; object-fit: contain;">`;
+                    });
+                    opcionesDiv.appendChild(opcionElement);
+                    opcionesDiv.appendChild(puntosContainer);
+
+                })
+                console.log('Respuesta del servidor:', opciones);
+            })
+            .catch(error => {
+                console.error('Error en la solicitud AJAX:', error);
+            });
+        });
+
+
+        function getCustomSuggestions(inputID) {
+            var input = document.getElementById(inputID).value;
+            var suggestionsDiv = document.getElementById(`${inputID}Suggestions`);
+            
+            fetch(`/get_suggestions?input=${input}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Procesar las sugerencias recibidas del servidor y mostrarlas.
+                    var databaseSuggestions = data.suggestions || [];
+                    suggestionsDiv.innerHTML = '';
+
+                    databaseSuggestions.forEach(function(suggestion) {
+                        var suggestionElement = document.createElement('div');
+                        if (suggestion.source.includes('Nombre')){
+                            suggestionElement.innerHTML = htmlAeropuerto(suggestion);
+                        }
+                        else{
+                            suggestionElement.innerHTML = htmlCiudad(suggestion);
+                        }
+                        suggestionElement.addEventListener('click', function() {
+                            if (suggestion.source.includes('Nombre')){
+                                document.getElementById(inputID).value = suggestion.nombre;
+                            }
+                            else if (suggestion.source.includes('Pais') || suggestion.source.includes('Ciudad')){                                
+                                document.getElementById(inputID).value = suggestion.ciudad + ', ' + suggestion.pais;
+                            }
+                            suggestionsDiv.innerHTML = '';
+                        });
+                        suggestionsDiv.appendChild(suggestionElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al obtener sugerencias:', error);
+                });
+        }
+
+        function htmlCiudad(suggestion){
+            return  `<svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class=" NMm5M">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"></path>
+                        <circle cx="12" cy="9" r="2.5"></circle>
+                    </svg>
+                    <span style="font-size: 14px;">${suggestion.ciudad}</span><br>
+                    <span style="font-size: 12px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>País:</b> <i>${suggestion.pais}</i></span>`;
+        }
+        function htmlPais(suggestion){
+            return  `<svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class=" NMm5M">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"></path>
+                        <circle cx="12" cy="9" r="2.5"></circle>
+                    </svg>
+                    <span style="font-size: 14px;">${suggestion.pais}</span><br>`;
+        }
+        function htmlAeropuerto(suggestion){
+            return `<svg enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24" focusable="false" class=" NMm5M">
+                        <g>
+                            <path d="M22,16v-2l-8.5-5V3.5C13.5,2.67,12.83,2,12,2s-1.5,0.67-1.5,1.5V9L2,14v2l8.5-2.5V19L8,20.5L8,22l4-1l4,1l0-1.5L13.5,19 v-5.5L22,16z"></path>
+                            <path d="M0,0h24v24H0V0z" fill="none"></path>
+                        </g>
+                    </svg>
+                    <span style="font-size: 14px;">${suggestion.nombre}</span><br>
+                    <span style="font-size: 12px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>${suggestion.ciudad}, ${suggestion.pais}</i></span>`;           
+        }
+        function selectHtml(tipo, suggestion){
+            switch(tipo){
+                case "evitar_pais": 
+                return htmlPais(suggestion);
+                case "evitar_ciudad":
+                return htmlCiudad(suggestion);
+                case "evitar_aeropuerto":
+                return htmlAeropuerto(suggestion);
+            }
+        }
+        
+        function getCustomSuggestionEvitar(tipo) {
+            var input = document.getElementById(`${tipo}`).value;
+            var suggestionsDiv = document.getElementById(`${tipo}Suggestions`);
+            var evitarSuggDiv = document.getElementById("evitarSelected")
+            fetch(`/${tipo}?input=${input}`)
+                .then(response => response.json())
+                .then(data => {
+                    
+                    var databaseSuggestions = data.suggestions || [];
+                    suggestionsDiv.innerHTML = '';
+                    console.log(databaseSuggestions);
+                    databaseSuggestions.forEach(function(suggestion) {
+                        var suggestionElement = document.createElement('div');
+                        suggestionElement.innerHTML = selectHtml(tipo, suggestion)
+                        
+                        suggestionElement.addEventListener('click', function() {
+                            document.getElementById(`${tipo}`).value = "";
+
+                            var evitarElement = document.createElement('div');
+                            evitarElement.style.borderRadius = '10px';
+                            evitarElement.innerHTML = selectHtml(tipo, suggestion)
+                                
+                            evitarElement.addEventListener('click', function(){
+                                evitarElement.remove();
+                            });
+
+                            document.getElementById("evitarSelected").appendChild(evitarElement);
+                            suggestionsDiv.innerHTML = '';
+                        });
+                        suggestionsDiv.appendChild(suggestionElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al obtener sugerencias:', error);
+                });
+        }
+    </script>
+{% endblock %}
+

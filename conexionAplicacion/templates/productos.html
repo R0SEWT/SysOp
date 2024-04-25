@@ -1,0 +1,27 @@
+{% extends "base.html"%}
+
+{% block title %}UPCTronix{% endblock %}
+
+{% block head %} {% endblock %}
+
+{% block content %}
+    <h1>Productos</h1>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                {% for elemento in producto%}
+                <td>{{ elemento }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+{% endblock %}
