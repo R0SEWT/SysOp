@@ -43,14 +43,19 @@ def closeConexion(cnxn):
     except Exception as e:
         print("Error al cerrar la conexión: ", e)
 
-def getTable(cursor, table):
+    
+def getTable(config, select, from_):
     try:
-        cursor.execute("SELECT * FROM "+table)
-        print(f"Tabla {table} consultada")
-        return cursor 
+        cnxn = getConexion(config)
+        cursor = getCursor(cnxn)
+        cursor.execute("SELECT "+ select +" FROM "+ from_)
+        print(f"Tabla {from_} consultada")
+        data = cursor.fetchall()
+        return data
     except Exception as e:
         print("Error al consultar la tabla: ", e)
         return None
+    
 
 
 '''cnxn = getConexion(config)

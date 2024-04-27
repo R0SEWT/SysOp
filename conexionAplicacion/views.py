@@ -12,16 +12,20 @@ def home():
 @views.route('/productos') 
 def consulta():
     try:
-        cnxn = q.getConexion(config)
-        cursor = q.getCursor(cnxn)
-        cursor = q.getTable(cursor, "Producto")
-        data = cursor.fetchall()
-        print(f"Data: {data}")
-        q.closeConexion(cnxn)
+        # DEV NOTE:
+        # las tablas estan en databse/tablas (ahi puesde revisar las tablas y los nombres de los campos)
+         
+        # SELECT name, precio, descripcion FROM Producto
+        select = "name, precio, descripcion"  
+        from_ = "Producto"
+        
+        data = q.getTable(config, select, from_) 
         
     except Exception as e:
         print("Error en la consulta: ", e)
         return 'Consulta fallida'
+    
+    print(f"Data consultada con exito")
     return render_template('productos.html', productos=data)
 
 @views.route("/sign-in")
