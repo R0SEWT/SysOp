@@ -6,19 +6,6 @@ from decouple import config
 # pyoobc es un paquete que permite la conexión 
 # a bases de datos SQL Server usando ODBC
 
-'''
-    Conexión a la base de datos de Azure
-    Se debe tener instalado el driver de ODBC para SQL Server
-    Driver={ODBC Driver 18 for SQL Server};
-    Server=tcp:sv-upctronix.database.windows.net,1433;
-    Database=Upctronix;
-    Uid=rosewt;
-    Pwd={your_password_here};
-    Encrypt=yes;
-    TrustServerCertificate=no;
-    Connection Timeout=30;
-
-'''
 
 
 def getConexion(config): 
