@@ -101,3 +101,15 @@ values
     (104, 8, 400.00, 1),
     (105, 9, 1400.00, 1),
     (106, 10, 900.00, 1);
+
+
+alter table [dbo].[Cliente] alter column edad int null;
+alter table [dbo].[Cliente] alter column sexo_id int null;
+alter table [dbo].[Cliente] add contrasena varchar(63);
+update [dbo].[Cliente] 
+	set contrasena = 'contrasenasegura';
+alter table [dbo].[Cliente] alter column contrasena varchar(63) null;
+
+select * from [dbo].[Cliente]
+
+SELECT contrasena FROM [dbo].[Cliente] WHERE host = 'nombre_host' LIMIT 1;

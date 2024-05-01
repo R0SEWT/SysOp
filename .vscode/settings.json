@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/41e7e4a7-4b62-4ae5-82ed-75fbb57cad07/resourceGroups/UPCTronix/providers/Microsoft.Web/sites/upctronix",
+    "appService.deploySubpath": "conexionAplicacion"
+}
