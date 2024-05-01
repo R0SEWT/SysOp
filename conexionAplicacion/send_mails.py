@@ -2,14 +2,15 @@ from email.message import EmailMessage
 import smtplib
 
 
-def send_email(config, rem, dest, asunto, cuerpo):
+def send_email(config, dest, asunto, cuerpo):
     try:
-        smtp_user = config["SMTP_USER"]
-        smtp_pass = config["SMTP_PASS"]
+        smtp_user = config('SMTP_USER')
+        smtp_pass = config('SMTP_PASS')
     except Exception as e:
         print(f"Error de al leer las claves SMTP: {e}")
         return False
 
+    rem = "rody.vilchez00@gmail.com"
     # inicializacion del email
     try:
         email = EmailMessage()
@@ -17,6 +18,7 @@ def send_email(config, rem, dest, asunto, cuerpo):
         email["To"] = dest
         email["Subject"] = asunto
         email.set_content(cuerpo)
+        print(f"Email inicializado {email, cuerpo}")
     except Exception as e:
         print(f"Error al inicializar el Email: {e}")
         return False
@@ -36,6 +38,7 @@ def send_email(config, rem, dest, asunto, cuerpo):
     # Envio del mensaje
     try:
         server.send_message(email)
+        print("Mensaje enviado")
         server.quit
     except Exception as e:
         print(f"Error al enviar el mensaje: {e}")

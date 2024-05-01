@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, jsonify, request, session, flash
 from decouple import config
 import consulta as q
+import send_mails as sm
+import pyodbc
 import re
 
 views = Blueprint('views', __name__)
@@ -52,12 +54,31 @@ def comprar():
 
     cursor.execute(sql)
     data = cursor.fetchall()
+
+    # TODO: enviar un correo con los productos comprados
+    usuario = session['usuario']
+    email = session['email']
+    cuerpo = f"Estimado {usuario} ha comprado los siguientes productos: \n"
+    cuerpo += "Precio\t\tProducto\n"
+    amout = 0
+    for producto in data:
+        cuerpo += f"{producto[1]}\t\t{producto[2]}\n"
+        amout += producto[1]
+    cuerpo += f"Total: {amout}\n"
+    cuerpo += "Gracias por su compra\n"
     
-    # data son los productos
-    # session['email'] es el correo
+
+    print(cuerpo)
+    sm.send_email(config, email, "UPCtronix agradece tu compra", cuerpo)
+
+    # TODO: guardar la compra en la base de datos
+    
+    
+    # data son los productos comprados
     flash("Compra realizada con exito", category="success")
     return jsonify({'mensaje': 'Inicio de sesión exitoso'}), 200
     
+
 
 
 
@@ -99,10 +120,11 @@ def registroUsuario():
     if error:
         return jsonify({'mensaje': 'Registro invalido'}), 401
     
-    sql = "INSERT INTO Cliente (full_name, email, contra) VALUES (?, ?, ?)"
+    sql = "INSERT INTO Cliente (full_name, email, contrasena) VALUES (?, ?, ?)" # esto es un ejemplo, no se debe guardar la contraseña en texto plano
+    # luego de hacer el registro, se debe redirigir al usuario a la página de logeo
     try:
-        cursor.execute(sql, (nombre, email, password))
-        cnxn.commit()
+        cursor.execute(sql, (nombre, email, password)) #luego de hacer el registro, se debe redirigir al usuario a la página de logeo
+        cnxn.commit() # se debe hacer commit para guardar los cambios en la base de datos
     except Exception as e:
         flash('Error al crear usuario', category='error')
         return jsonify({'mensaje': 'Credenciales incorrectas'}), 401
@@ -120,14 +142,15 @@ def autentificacion():
     cursor = q.getCursor(cnxn)
 
     datosLogeo = request.json
+    print(f"logenadose {datosLogeo}")
 
     email = datosLogeo['email']
     password = datosLogeo['password']
 
-    sql = "SELECT full_name FROM cliente WHERE email = ? AND contra = ?"
+    sql = "SELECT full_name FROM cliente WHERE email = ? AND contrasena = ?"
     try:
-        cursor.execute(sql, (email, password))
-        usuario = cursor.fetchone()
+        cursor.execute(sql, (email, password)) 
+        usuario = cursor.fetchone() # fetchone() obtiene la primera fila de la consulta
     except Exception as e:
         print("error")
     finally:
