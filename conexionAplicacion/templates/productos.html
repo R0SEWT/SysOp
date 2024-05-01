@@ -2,7 +2,59 @@
 
 {% block title %}UPCTronix{% endblock %}
 
-{% block head %} {% endblock %}
+{% block head %} 
+<style>
+    /* Estilo para el checkbox */
+    .custom-checkbox {
+        display: inline-block;
+        position: relative;
+        cursor: pointer;
+        padding-left: 25px;
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+        opacity: 0;
+        position: absolute;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+        border-radius: 3px;
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked + .checkmark:after {
+        content: "";
+        position: absolute;
+        display: block;
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    
+
+    
+
+    .table th {
+        background-color: #f2f2f2;
+        text-align: center;
+    }
+
+    .table td.centered {
+        text-align: center;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
     <h1>Productos</h1>
@@ -10,18 +62,63 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Precio</th>
-                <th>Descripción</th>
+                <th style="width: 25%;">Nombre</th>
+                <th style="width: 10%;">Precio</th>
+                <th style="width: 30%;">Descripción</th>
+                <th style="width: 25%;">Imagen</th>
+                <th style="width: 10%;">Comprar</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="productosid">
             {% for producto in productos %}
             <tr>
+                <td data-producto-id="{{ producto.id }}" style="display: none;"></td>
                 {% for elemento in producto%}
-                <td>{{ elemento }}</td>
+                    {% if not loop.first %} {# Ignora el primer elemento (el ID del producto) #}
+                        <td>{{ elemento }}</td>
+                    {% endif %}
                 {% endfor %}
+                <td class="centered">
+                    <label class="custom-checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                    </label>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
+    </table>
+        <a>
+            <button type="button" class="btn btn-primary" onclick="enviarFilasSeleccionadas()" >Comprar</button>
+        </a>
+
+    <script>
+        function obtenerIds() {
+            var ids = [];
+            var filas = document.querySelectorAll("#productosid tr input:checked");
+            for (var i = 0; i < filas.length; i++) {
+                ids.push(filas[i].closest("tr").cells[0].getAttribute('data-producto-id'));
+            }
+            return ids;
+        }
+        function enviarFilasSeleccionadas() {
+            var ids = obtenerIds();
+            var datos = { ids: ids };
+
+            // Enviar los datos al servidor
+            fetch('/comprar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datos)
+            })
+            .then(response => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error al enviar filas al servidor:', error);
+            });
+        }
+    </script>
 {% endblock %}

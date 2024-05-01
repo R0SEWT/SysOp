@@ -55,6 +55,8 @@ def getTable(config, select, from_):
     except Exception as e:
         print("Error al consultar la tabla: ", e)
         return None
+    finally:
+        closeConexion(cnxn)
     
 
 
