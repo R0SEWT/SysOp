@@ -45,7 +45,7 @@ def closeConexion(cnxn):
 
 def getTable(cursor, table):
     try:
-        cursor.execute("SELECT * FROM "+table)
+        cursor.execute("SELECT * FROM dbo."+table)
         print(f"Tabla {table} consultada")
         return cursor 
     except Exception as e:

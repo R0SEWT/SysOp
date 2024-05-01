@@ -25,20 +25,66 @@
                     <a class="nav-link" href="/contactanos">Contacto</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Buscar" aria-label="Buscar">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
-            </form>
-            <a href="/sign-in" class="btn btn-primary ml-2 signin">Iniciar sesión</a>
+            {% if 'usuario' in session %}
+                <div class="alert alert-success" role="alert">
+                    ¡Bienvenido, {{ session['usuario'] }}!
+                </div>
+                <button class="btn btn-primary" type="button" onclick="cerrar()" style="margin-left: 10px;">Cerrar sesión</button>
+            {% else %}
+                <a href="/log-in" class="btn btn-primary ml-2 signin">Iniciar sesión</a>
+            {% endif %}
         </div>
     </nav>
+
+    <div class="position-fixed top-0 start-50 translate-middle-x" style="width: 100%; z-index: 9999;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+         
+        
+        
     <div class="container mt-5">
         <!-- Contenido de la aplicación aquí -->
         {% block content %}
         {% endblock %}    
         
     </div>
+    <script>
+        function cerrar(){
+            fetch('/log-out', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            })
+            .then(() => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error al obtener sugerencias:', error);
+            });
+        }
 
+    </script>
     <!-- Scripts de Bootstrap (jQuery y Popper.js) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
