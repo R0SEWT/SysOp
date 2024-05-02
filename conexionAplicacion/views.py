@@ -4,6 +4,7 @@ import consulta as q
 import send_mails as sm
 import pyodbc
 import re
+from datetime import datetime
 
 views = Blueprint('views', __name__)
 
@@ -16,8 +17,10 @@ def validar_correo(correo):
         return False
 
 @views.route('/')
-def home():
+def home():    
     return render_template('home.html')
+
+
 
 @views.route('/productos') 
 def consulta():
@@ -55,7 +58,6 @@ def comprar():
     cursor.execute(sql)
     data = cursor.fetchall()
 
-    # TODO: enviar un correo con los productos comprados
     usuario = session['usuario']
     email = session['email']
     cuerpo = f"Estimado {usuario} ha comprado los siguientes productos: \n"
@@ -70,10 +72,51 @@ def comprar():
 
     print(cuerpo)
     sm.send_email(config, email, "UPCtronix agradece tu compra", cuerpo)
+##############################################################################
+    '''# guardar la compra en la base de datos
+    try:
+        #insertar facturacion
+        try:
+            t_factura = "1"
+            dni = "72611234"
+            sql = "INSERT INTO Facturacion (tipo_factura, ruc_dni, emai) VALUES (?, ?, ?)"
+            cursor.execute(sql, (t_factura, dni, email))
+            cnxn.commit() # el problema es que no se guarda en la base de datos
+            #porque no se guarda en la base de datos
+        except Exception as e:
+            print("Error al guardar la factura en la base de datos:", e)
+            cnxn.rollback()
+        
 
-    # TODO: guardar la compra en la base de datos
-    
-    
+        #insertar venta
+        # obtener el ID del cliente
+        
+        sql = "insert into Venta(client_id, datos_facturacion) values (?, ?)", (session['id'], t_factura)
+        cursor.execute(sql, (usuario, t_factura))
+        cnxn.commit()
+        venta_id = cursor.lastrowid  # Obtener el ID de la venta recién insertada
+
+        #insertar producto vendido
+
+        for producto in data:
+            cursor.execute("INSERT INTO DetallesVenta (venta_id, producto_id, precio) VALUES (?, ?, ?, 1)", (venta_id, producto[0], producto[2]))
+
+        cnxn.commit()  # Guardar los cambios en la base de datos
+
+        # disminuir el stock de los productos vendidos
+        for producto in data:
+            cursor.execute("UPDATE Producto SET stock = stock - 1 WHERE id = ?", (producto[0],))
+        cnxn.commit()
+
+
+    except Exception as e:
+        print("Error al guardar la venta en la base de datos:", e)
+        cnxn.rollback()  # Revertir cambios en caso de error
+        flash("Error al procesar la compra. Por favor, inténtalo de nuevo más tarde.", category="error")
+        return jsonify({'mensaje': 'Error al procesar la compra'}), 500
+    '''
+
+    q.closeConexion(cnxn)
     # data son los productos comprados
     flash("Compra realizada con exito", category="success")
     return jsonify({'mensaje': 'Inicio de sesión exitoso'}), 200
@@ -147,7 +190,7 @@ def autentificacion():
     email = datosLogeo['email']
     password = datosLogeo['password']
 
-    sql = "SELECT full_name FROM cliente WHERE email = ? AND contrasena = ?"
+    sql = "SELECT full_name, id FROM cliente WHERE email = ? AND contrasena = ?"
     try:
         cursor.execute(sql, (email, password)) 
         usuario = cursor.fetchone() # fetchone() obtiene la primera fila de la consulta
@@ -159,6 +202,7 @@ def autentificacion():
     if usuario:
         session['email'] = email
         session['usuario'] = usuario[0] 
+        session['id'] = usuario[1]
         return jsonify({'mensaje': 'Inicio de sesión exitoso'}), 200
     else:
         flash('Credenciales incorrectas', category='error')

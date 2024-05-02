@@ -57,6 +57,20 @@ def getTable(config, select, from_):
         return None
     finally:
         closeConexion(cnxn)
+
+def getTable(config, select, from_):
+    try:
+        cnxn = getConexion(config)
+        cursor = getCursor(cnxn)
+        cursor.execute("SELECT "+ select +" FROM "+ from_)
+        print(f"Tabla {from_} consultada")
+        data = cursor.fetchall()
+        return data
+    except Exception as e:
+        print("Error al consultar la tabla: ", e)
+        return None
+    finally:
+        closeConexion(cnxn)
     
 
 
